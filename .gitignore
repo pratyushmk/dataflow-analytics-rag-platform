@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+.venv/
+.env
+.env.local
+
+.pyenv/
+.mypy_cache/
+ruff_cache/
+
+.idea/
+.vscode/
