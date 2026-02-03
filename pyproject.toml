@@ -1,0 +1,27 @@
+[project]
+name = "doc-search-analytics"
+version = "0.1.0"
+description = "a RAG based event search analytics platform"
+authors = [
+    {name = "Pratyush Mulpuru",email = "mk.pratyush@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.11,<3.15"
+dependencies = [
+    "pyspark (>=4.1.1,<5.0.0)",
+    "pandas (>=3.0.0,<4.0.0)",
+    "fastapi (>=0.128.0,<0.129.0)",
+    "uvicorn (>=0.40.0,<0.41.0)",
+    "s3fs (>=2026.1.0,<2027.0.0)",
+    "boto3",
+    "faiss-cpu",
+    "langchain (>=1.2.8,<2.0.0)",
+    "langchain-community",
+    "langchain-openai",
+    "pyarrow (>=23.0.0,<24.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
