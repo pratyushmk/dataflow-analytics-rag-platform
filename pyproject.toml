@@ -1,7 +1,7 @@
 [project]
-name = "doc-search-analytics"
+name = "dataflow-analytics-rag-platform"
 version = "0.1.0"
-description = "a RAG based event search analytics platform"
+description = "Cloud-native analytics platform with Spark ETL, FastAPI, and RAG"
 authors = [
     {name = "Pratyush Mulpuru",email = "mk.pratyush@gmail.com"}
 ]
@@ -21,6 +21,8 @@ dependencies = [
     "pyarrow (>=23.0.0,<24.0.0)"
 ]
 
+[tool.poetry]
+package-mode = false
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
