@@ -1,5 +1,3 @@
-# docker-compose.yml
-version: "3.9"
 services:
   localstack:
     image: localstack/localstack
@@ -9,3 +7,24 @@ services:
       - SERVICES=s3
       - AWS_DEFAULT_REGION=us-east-1
 
+  api:
+    build: .
+    container_name: dataflow-api
+    ports:
+      - "8000:8000"
+    depends_on:
+      - localstack
+    environment:
+      # OpenAI (for RAG)
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+
+      # AWS creds for LocalStack
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+
+      # LocalStack S3 endpoint
+      - AWS_ENDPOINT_URL=http://localstack:4566
+    volumes:
+      # Mount FAISS index(not part of image)
+      - ./rag/index:/app/rag/index
