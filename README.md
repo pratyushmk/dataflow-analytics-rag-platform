@@ -4,6 +4,35 @@ A cloud-native event analytics platform that combines **Spark-based ETL**, **Fas
 
 ---
 
+## Quick Start
+
+```bash
+git clone <repo>
+
+# Creates venv and installs dependencies
+poetry install
+
+# Put your actual OPENAI_API_KEY
+export OPENAI_API_KEY=<your_api_key> sk----
+
+docker compose up -d
+
+export AWS_ACCESS_KEY_ID=test
+export AWS_SECRET_ACCESS_KEY=test
+
+aws --endpoint-url=http://localhost:4566 s3 mb s3://dataflow-raw
+aws --endpoint-url=http://localhost:4566 s3 mb s3://dataflow-processed
+aws --endpoint-url=http://localhost:4566 \
+  s3 cp sample_events.json \
+  s3://dataflow-raw/events/sample_events.json
+
+spark-submit \
+--packages org.apache.hadoop:hadoop-aws:3.4.0 \
+etl/process_events.py
+```
+
+---
+
 ## Features
 
 - **Event Ingestion & ETL**
@@ -63,7 +92,7 @@ A cloud-native event analytics platform that combines **Spark-based ETL**, **Fas
         |                                     |
         |                          +----------+----------+
         |                          |  Raw S3 Events      |
-        |                          |  JSON             |
+        |                          |  NDJSON             |
         |                          +---------------------+
 
 ```
@@ -81,23 +110,83 @@ A cloud-native event analytics platform that combines **Spark-based ETL**, **Fas
 
 ---
 
-## Local Development Setup
+## Running the Project
+
+This project supports two execution modes:
+
+- Containerized execution using Docker Compose (recommended for API + LocalStack)
+- Local execution on your machine (recommended for Spark ETL)
+
+Both modes use the same architecture and codebase.
+
+---
+
+## Option 1: Run Using Docker Compose (API + LocalStack)
+
+This mode is recommended for running the FastAPI analytics and RAG services together with LocalStack.
+
+### Build and start containers
+
+```bash
+docker compose up --build
+```
+
+This starts:
+
+- LocalStack (S3)
+- FastAPI service (analytics + RAG)
+
+### Environment Variables
+
+Docker Compose injects the required environment variables:
+
+```bash
+AWS_ACCESS_KEY_ID=test
+AWS_SECRET_ACCESS_KEY=test
+AWS_DEFAULT_REGION=us-east-1
+AWS_ENDPOINT_URL=http://localstack:4566
+OPENAI_API_KEY=your_api_key
+```
+
+The OpenAI API key is never committed and should be provided via:
+
+- shell export, or
+- local .env file
+
+### FAISS Index (RAG)
+
+The FAISS vector index is a generated artifact and is not committed to Git.
+
+Build the RAG index when a new doc is created or an existing doc is updated.
+
+```bash
+export OPENAI_API_KEY=<your_api_key> sk----
+
+python rag/build_index.py
+```
+
+Docker Compose mounts the index into the container:
+
+```bash
+volumes:
+  - ./rag/index:/app/rag/index
+```
+
+## Option 2: Run Locally on Your Machine (Spark ETL)
+
+> LocalStack must be running before executing the Spark ETL job.
+
+This mode is ideal for running the Spark ETL, since Spark requires Java and is often easier to debug outside containers.
 
 ### Prerequisites
 
-- Python `3.11 – 3.14`
+- Python `3.11 (recommended)`
 - Java 17+
 - Apache Spark 4.x
 - LocalStack
 - AWS CLI
 
 ---
-
-### Start LocalStack
-
-```bash
-localstack start
-```
 
 ### Create S3 Buckets
 
@@ -108,31 +197,56 @@ aws --endpoint-url=http://localhost:4566 s3 mb s3://dataflow-processed
 
 ### Upload Sample Events
 
+Raw events must be line-delimited JSON (NDJSON), not a JSON array.
+
 ```bash
 aws --endpoint-url=http://localhost:4566 \
   s3 cp sample_events.json \
   s3://dataflow-raw/events/sample_events.json
 ```
 
+### Export AWS Credentials (Required for Spark)
+
+```bash
+  export AWS_ACCESS_KEY_ID=test
+  export AWS_SECRET_ACCESS_KEY=test
+  export AWS_DEFAULT_REGION=us-east-1
+  export AWS_EC2_METADATA_DISABLED=true
+```
+
 ### Run Spark ETL
 
 ```bash
-spark-submit etl/process_events.py
+spark-submit \
+--packages org.apache.hadoop:hadoop-aws:3.4.0 \
+etl/process_events.py
 ```
 
-### Build the RAG index
+Spark connects to LocalStack using:
 
 ```bash
-export OPENAI_API_KEY=<your_api_key> sk----
-
-python rag/build_index.py
+http://localhost:4566
 ```
 
-### Start the API
+and writes partitioned Parquet output to the processed bucket.
 
-```bash
-uvicorn api.main:app --reload
-```
+---
+
+## Troubleshooting
+
+**Spark cannot find S3 path**
+
+- Ensure at least one object exists under the S3 prefix
+
+**Analytics API cannot connect to S3**
+
+- Inside Docker, use `http://localstack:4566`, not `localhost`
+
+**Spark fails with UnsupportedClassVersionError**
+
+- Ensure Java 17 is active
+
+---
 
 ## Analytics API Usage
 
@@ -156,6 +270,8 @@ curl "http://127.0.0.1:8000/analytics/events?event_type=click"
   "total_events": 42
 }
 ```
+
+---
 
 ## RAG API Usage
 
@@ -181,6 +297,8 @@ curl "http://127.0.0.1:8000/rag/search?query=How does the ETL process click even
 }
 ```
 
+---
+
 ## Incremental ETL Design
 
 - ETL maintains a checkpoint timestamp in S3
@@ -188,9 +306,10 @@ curl "http://127.0.0.1:8000/rag/search?query=How does the ETL process click even
 - First run performs a full load
 - Safe to re-run without duplication
 
+---
+
 ## Design Principles
 
-- Design Principles
 - Clear separation of ETL, analytics, and RAG
 - Derived artifacts (FAISS index) are not committed
 - Local-first development, cloud-ready architecture
