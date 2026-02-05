@@ -234,17 +234,14 @@ and writes partitioned Parquet output to the processed bucket.
 
 ## Troubleshooting
 
-**Spark cannot find S3 path**
+If you encounter issues during setup:
 
-- Ensure at least one object exists under the S3 prefix
+- Ensure LocalStack is running before executing the Spark ETL
+- Spark requires **Java 17** (Spark 4.x)
+- At least one object must exist under an S3 prefix before Spark can read it
+- When running inside Docker, services must use `http://localstack:4566`, not `localhost`
 
-**Analytics API cannot connect to S3**
-
-- Inside Docker, use `http://localstack:4566`, not `localhost`
-
-**Spark fails with UnsupportedClassVersionError**
-
-- Ensure Java 17 is active
+For detailed operational guidance and recovery steps, see [`ops.md`](./ops.md).
 
 ---
 
