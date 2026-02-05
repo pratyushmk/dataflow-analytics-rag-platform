@@ -3,7 +3,7 @@
 This document describes runtime behavior, operational considerations, and recovery procedures for the DataFlow Analytics & RAG Platform.
 
 It is intended for operators and maintainers, not first-time users.
-For setup and usage instructions, see `README.md`
+For setup and usage instructions, see [`README.md`](../README.md)
 
 ---
 

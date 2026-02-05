@@ -241,7 +241,7 @@ If you encounter issues during setup:
 - At least one object must exist under an S3 prefix before Spark can read it
 - When running inside Docker, services must use `http://localstack:4566`, not `localhost`
 
-For detailed operational guidance and recovery steps, see [`ops.md`](./ops.md).
+For detailed operational guidance and recovery steps, see [`ops.md`](./docs/ops.md).
 
 ---
 
